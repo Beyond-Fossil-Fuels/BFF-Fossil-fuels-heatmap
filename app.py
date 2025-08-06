@@ -37,7 +37,7 @@ selected_country = st.sidebar.selectbox(
 )
 
 # Fuel filter
-available_fuels = ['Coal','Gas','Fossil Fuel']#sorted(df['Fuel'].unique())
+available_fuels = ['Coal','Gas','Fossil fuel']#sorted(df['Fuel'].unique())
 selected_fuel = st.sidebar.radio(
     "Select fossil fuel:",
     options=available_fuels,
