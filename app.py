@@ -30,7 +30,7 @@ df = load_your_data('generation_data.csv')
 st.sidebar.header("Filters")
 
 # Fuel filter
-available_fuels = sorted(df['Fuel'].unique())
+available_fuels = ['Coal','Gas','Fossil Fuel']#sorted(df['Fuel'].unique())
 selected_fuel = st.sidebar.radio(
     "Select fossil fuel:",
     options=available_fuels,
@@ -48,10 +48,10 @@ selected_share_bin = st.sidebar.select_slider(
 
 # Country filter
 available_countries = sorted(df['Country'].unique())
-selected_countries = [st.sidebar.selectbox(
+selected_country = st.sidebar.selectbox(
     "Select country:",
     options=available_countries
-)]
+)
 
 # Year filter
 available_years = sorted(df['Year'].unique())
@@ -68,7 +68,7 @@ filtered_df = df[
     (df['Fuel'] == selected_fuel) & 
     (df['Share_bins'] == selected_share_bin) &
     (df['Year'].isin(selected_years)) &
-    (df['Country'].isin(selected_countries))
+    (df['Country'].isin([selected_country]))
 ]
 
 # Check if filtered data is empty
@@ -103,7 +103,7 @@ fig.add_trace(go.Heatmap(
     colorscale=[[0, 'red'], [1, 'green']],
     colorbar=dict(title="Hour Values"),
     hoverongaps=False,
-    hovertemplate='Month: %{x}<br>Year: %{y}<br>Hour: %{z}<extra></extra>',
+    hovertemplate='Month: %{x}<br>Year: %{y}<br>Number of hours: %{z}<extra></extra>',
     showscale=True,
     zmin=0,
     zmax=744,
@@ -112,7 +112,7 @@ fig.add_trace(go.Heatmap(
 
 
 fig.update_layout(
-    title=f'Heatmap representing the number of hours when {selected_fuel} represents less than {selected_share_bin} of total country generation',
+    title=f'Heatmap representing the number of hours when {selected_fuel} represents less than {selected_share_bin} of total {selected_country} generation',
     xaxis_title='Month',
     yaxis_title='Year',
     width=800,
@@ -126,7 +126,7 @@ st.text("Source: Beyond Fossil Fuels' elaboration based on ENTSO-E data")
 
 
 # Display filtered data table
-with st.expander("📊 View Filtered Data"):
+with st.expander("📊 View data"):
     st.dataframe(
         filtered_df,
         use_container_width=True,
@@ -136,7 +136,7 @@ with st.expander("📊 View Filtered Data"):
 # Data download
 csv = filtered_df.to_csv(index=False)
 st.download_button(
-    label="📥 Download Filtered Data as CSV",
+    label="📥 Download data as CSV",
     data=csv,
     file_name=f"filtered_data_{selected_fuel}_{selected_share_bin}.csv",
     mime="text/csv"
