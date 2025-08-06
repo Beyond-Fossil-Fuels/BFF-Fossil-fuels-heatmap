@@ -29,6 +29,13 @@ df = load_your_data('generation_data.csv')
 # Sidebar for filters
 st.sidebar.header("Filters")
 
+# Country filter
+available_countries = sorted(df['Country'].unique())
+selected_country = st.sidebar.selectbox(
+    "Select country:",
+    options=available_countries
+)
+
 # Fuel filter
 available_fuels = ['Coal','Gas','Fossil Fuel']#sorted(df['Fuel'].unique())
 selected_fuel = st.sidebar.radio(
@@ -45,13 +52,6 @@ selected_share_bin = st.sidebar.select_slider(
     options=available_share_bins
 )
 
-
-# Country filter
-available_countries = sorted(df['Country'].unique())
-selected_country = st.sidebar.selectbox(
-    "Select country:",
-    options=available_countries
-)
 
 # Year filter
 available_years = sorted(df['Year'].unique())
