@@ -30,7 +30,8 @@ df = load_your_data('generation_data.csv')
 st.sidebar.header("Filters")
 
 # Country filter
-available_countries = sorted(df['Country'].unique()).remove('Italy')
+available_countries = sorted(df['Country'].unique())
+available_countries = available_countries.remove('Italy')
 selected_country = st.sidebar.selectbox(
     "Select country:",
     options=available_countries
