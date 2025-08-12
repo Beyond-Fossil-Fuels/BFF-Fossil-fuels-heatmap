@@ -30,7 +30,7 @@ df = load_your_data('generation_data.csv')
 st.sidebar.header("Filters")
 
 # Country filter
-available_countries = sorted(df['Country'].unique())
+available_countries = sorted(df['Country'].unique()).remove('Italy')
 selected_country = st.sidebar.selectbox(
     "Select country:",
     options=available_countries
@@ -45,7 +45,7 @@ selected_fuel = st.sidebar.radio(
 )
 
 # Share_bins filter
-available_share_bins = ['<1%', '<10%', '<20%', '<30%', '<40%', '<50%', '<60%', '<70%', '<80%', '<90%']
+available_share_bins = ['<1%', '<3%', '<5%', '<10%', '<20%', '<30%', '<40%', '<50%']
 #sorted(df['Share_bins'].unique())
 selected_share_bin = st.sidebar.select_slider(
     "Select fossil fuel share:",

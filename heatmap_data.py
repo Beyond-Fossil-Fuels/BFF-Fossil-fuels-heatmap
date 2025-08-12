@@ -132,8 +132,8 @@ df_generation['Hour'] = df_generation['ResolutionCode'].apply(
 df_generation['Year'] = df_generation['DateTime'].dt.year
 df_generation['Month'] = df_generation['DateTime'].dt.month
 
-bins = [0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, float('inf')]
-labels = ['<1%', '<5%', '<10%', '<15%', '<20%', '<25%', '<30%', '<35%', '<40%', '<45%', '<50%', '<55%', '<60%', '<65%', '<70%', '<75%', '<80%', '<85%', '<90%', '<95%', '>=95%']
+bins = [0, 1, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, float('inf')]
+labels = ['<1%', '<3%', '<5%', '<10%', '<15%', '<20%', '<25%', '<30%', '<35%', '<40%', '<45%', '<50%', '<55%', '<60%', '<65%', '<70%', '<75%', '<80%', '<85%', '<90%', '<95%', '>=95%']
 
 # Classify to discrete categories
 df_generation['Share_bins'] = pd.cut(df_generation['Share'], 
@@ -148,7 +148,17 @@ df_generation['Fuel'] = pd.Categorical(df_generation['Fuel'], ['Coal','Gas','Fos
 result = df_generation.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'],observed=False)['Hour'].sum().reset_index()
 
 
-result = result.sort_values(['Year', 'Month', 'Country', 'Fuel', 'Share_bins'])
-result['Cumulative_Hours'] = result.groupby(['Year', 'Month', 'Country', 'Fuel'])['Hour'].cumsum()
 
-result.to_csv("share_of_generation_monthly2.csv",index=False)
+
+# Sum for all countries
+all_countries = result[result['Country'] != 'Italy'].copy()
+all_countries['Country'] = 'All countries'
+all_countries = all_countries.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'],observed=False)['Hour'].sum().reset_index()
+
+result = pd.concat([result,all_countries])
+
+# Order
+result = result.sort_values(['Year', 'Month', 'Country', 'Fuel', 'Share_bins'])
+#result['Cumulative_Hours'] = result.groupby(['Year', 'Month', 'Country', 'Fuel'])['Hour'].cumsum()
+
+result.to_csv('generation_data.csv',index=False)
