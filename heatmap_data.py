@@ -129,8 +129,8 @@ df_generation['DateTime'] = pd.to_datetime(df_generation['DateTime'])
 df_generation['Hour'] = df_generation['ResolutionCode'].apply(
     lambda x: 0.25 if x == 'PT15M' else (0.5 if x == 'PT30M' else 1)
 )
-df_generation['Year'] = df_generation['DateTime'].dt.year
-df_generation['Month'] = df_generation['DateTime'].dt.month
+df_generation['Year'] = df_generation['DateTime'].dt.year.astype('int') 
+df_generation['Month'] = df_generation['DateTime'].dt.month.astype('int') 
 
 bins = [0, 1, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, float('inf')]
 labels = ['<1%', '<3%', '<5%', '<10%', '<15%', '<20%', '<25%', '<30%', '<35%', '<40%', '<45%', '<50%', '<55%', '<60%', '<65%', '<70%', '<75%', '<80%', '<85%', '<90%', '<95%', '>=95%']
@@ -145,8 +145,29 @@ df_generation['Share_bins'] = pd.cut(df_generation['Share'],
 df_generation['Share_bins'] = df_generation['Share_bins'].astype('category')
 df_generation['Fuel'] = pd.Categorical(df_generation['Fuel'], ['Coal','Gas','Fossil fuel'])
 
-result = df_generation.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'],observed=False)['Hour'].sum().reset_index()
+#result = df_generation.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'],observed=False)['Hour'].sum().reset_index()
+# Use observed=True to only get existing combinations
+result = df_generation.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'], observed=True)['Hour'].sum().reset_index()
 
+# Now add missing Share_bins categories for each Year/Month/Country/Fuel combination
+all_combinations = result[['Year', 'Month', 'Country', 'Fuel']].drop_duplicates()
+
+# Create a complete index with all Share_bins categories
+complete_index = []
+for _, row in all_combinations.iterrows():
+    for share_bin in df_generation['Share_bins'].cat.categories:
+        for fuel in df_generation['Fuel'].cat.categories:
+            complete_index.append({
+                'Year': row['Year'],
+                'Month': row['Month'], 
+                'Country': row['Country'],
+                'Fuel': fuel,
+                'Share_bins': share_bin
+            })
+
+complete_df = pd.DataFrame(complete_index).drop_duplicates()
+result = complete_df.merge(result, on=['Year', 'Month', 'Country', 'Fuel', 'Share_bins'], how='left')
+result['Hour'] = result['Hour'].fillna(0)
 
 
 
@@ -160,6 +181,8 @@ all_countries['Hour'] = all_countries['Hour'] / number_of_countries
 result = pd.concat([result,all_countries])
 
 # Order
+result['Share_bins'] = result['Share_bins'].astype('category')
+result['Share_bins'] = result['Share_bins'].cat.reorder_categories(labels, ordered=True)
 result = result.sort_values(['Year', 'Month', 'Country', 'Fuel', 'Share_bins'])
 result['Cumulative_Hours'] = result.groupby(['Year', 'Month', 'Country', 'Fuel'])['Hour'].cumsum()
 

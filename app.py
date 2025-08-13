@@ -16,15 +16,13 @@ st.set_page_config(
 # st.title("Heatmap - Fossil fuel share in power generation")
 
 @st.cache_data
-def load_your_data(filepath):
-
-    # Option 1: CSV file
+def load_data(filepath):
     return pd.read_csv(filepath)
 
 
 # Load data
-# Replace load_sample_data() with load_your_data() when you have your actual data
-df = load_your_data('generation_data.csv')
+df = load_data('generation_data.csv')
+df['Cumulative_Hours'] = round(df['Cumulative_Hours'],0)
 
 # Sidebar for filters
 st.sidebar.header("Filters")
