@@ -24,7 +24,7 @@ def load_your_data(filepath):
 
 # Load data
 # Replace load_sample_data() with load_your_data() when you have your actual data
-df = load_your_data('Heatmap/generation_data.csv')
+df = load_your_data('generation_data.csv')
 
 # Sidebar for filters
 st.sidebar.header("Filters")
