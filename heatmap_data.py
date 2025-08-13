@@ -154,11 +154,13 @@ result = df_generation.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins']
 all_countries = result[result['Country'] != 'Italy'].copy()
 all_countries['Country'] = 'All countries'
 all_countries = all_countries.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'],observed=False)['Hour'].sum().reset_index()
+number_of_countries = len(result['Country'].unique())-1
+all_countries['Hour'] = all_countries['Hour'] / number_of_countries
 
 result = pd.concat([result,all_countries])
 
 # Order
 result = result.sort_values(['Year', 'Month', 'Country', 'Fuel', 'Share_bins'])
-#result['Cumulative_Hours'] = result.groupby(['Year', 'Month', 'Country', 'Fuel'])['Hour'].cumsum()
+result['Cumulative_Hours'] = result.groupby(['Year', 'Month', 'Country', 'Fuel'])['Hour'].cumsum()
 
 result.to_csv('generation_data.csv',index=False)

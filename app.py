@@ -24,14 +24,13 @@ def load_your_data(filepath):
 
 # Load data
 # Replace load_sample_data() with load_your_data() when you have your actual data
-df = load_your_data('generation_data.csv')
+df = load_your_data('Heatmap/generation_data.csv')
 
 # Sidebar for filters
 st.sidebar.header("Filters")
 
 # Country filter
 available_countries = sorted(df['Country'].unique())
-available_countries = available_countries.remove('Italy')
 selected_country = st.sidebar.selectbox(
     "Select country:",
     options=available_countries
@@ -124,6 +123,10 @@ fig.update_layout(
 # Display the heatmap
 st.plotly_chart(fig, use_container_width=True)
 st.text("Source: Beyond Fossil Fuels' elaboration based on ENTSO-E data")
+if selected_country == 'All countries':
+    st.text('All countries mean all countries of the list, besides Italy for which there is a concern in data quality')
+elif selected_country == 'Italy':
+    st.text('For Italy, there is a concern in data quality, especially before 2018')
 
 
 # Display filtered data table
