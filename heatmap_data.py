@@ -130,7 +130,7 @@ df_generation['Hour'] = df_generation['ResolutionCode'].apply(
     lambda x: 0.25 if x == 'PT15M' else (0.5 if x == 'PT30M' else 1)
 )
 df_generation['Year'] = df_generation['DateTime'].dt.year.astype('int') 
-df_generation['Month'] = df_generation['DateTime'].dt.month.astype('int') 
+df_generation['Month'] = df_generation['DateTime'].dt.month.astype('int')
 
 bins = [0, 1, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, float('inf')]
 labels = ['<1%', '<3%', '<5%', '<10%', '<15%', '<20%', '<25%', '<30%', '<35%', '<40%', '<45%', '<50%', '<55%', '<60%', '<65%', '<70%', '<75%', '<80%', '<85%', '<90%', '<95%', '>=95%']
@@ -169,7 +169,33 @@ complete_df = pd.DataFrame(complete_index).drop_duplicates()
 result = complete_df.merge(result, on=['Year', 'Month', 'Country', 'Fuel', 'Share_bins'], how='left')
 result['Hour'] = result['Hour'].fillna(0)
 
+# If no data, we assume there is no such fuel in the country, and we consider all hours are 0
+number_of_hours=result[['Year', 'Month', 'Country', 'Fuel','Hour']].groupby(['Year', 'Month', 'Country', 'Fuel']).sum().reset_index()
+missing_data = number_of_hours[number_of_hours['Hour']==0][['Year', 'Month', 'Country', 'Fuel']]
+number_of_hours=number_of_hours.groupby(['Year', 'Month']).max().reset_index()
+number_of_hours = number_of_hours[['Year', 'Month','Hour']]
 
+# Merge missing_data with number_of_hours to get the Hour values
+missing_with_hours = missing_data.merge(
+    number_of_hours, 
+    on=['Year', 'Month'], 
+    how='left'
+)
+
+# For each row in missing_with_hours, find matching rows in result
+for _, missing_row in missing_with_hours.iterrows():
+    # Find matching rows in result
+    mask = (
+        (result['Year'] == missing_row['Year']) &
+        (result['Month'] == missing_row['Month']) &
+        (result['Country'] == missing_row['Country']) &
+        (result['Fuel'] == missing_row['Fuel']) &
+        (result['Share_bins'] == '<1%')
+    )
+    
+    # Update Share_bins to '<1%' and Hour to the value from number_of_hours
+    if mask.any() and pd.notna(missing_row['Hour']):
+        result.loc[mask, 'Hour'] = missing_row['Hour']
 
 # Sum for all countries
 all_countries = result[result['Country'] != 'Italy'].copy()
@@ -186,4 +212,4 @@ result['Share_bins'] = result['Share_bins'].cat.reorder_categories(labels, order
 result = result.sort_values(['Year', 'Month', 'Country', 'Fuel', 'Share_bins'])
 result['Cumulative_Hours'] = result.groupby(['Year', 'Month', 'Country', 'Fuel'])['Hour'].cumsum()
 
-result.to_csv('generation_data.csv',index=False)
+result.to_csv('generation_data_test.csv',index=False)
