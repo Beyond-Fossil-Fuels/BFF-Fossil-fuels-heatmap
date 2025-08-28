@@ -6,6 +6,8 @@ country_eic = {
     '10YHR-HEP------M': 'Croatia',
     '10YCY-1001A0003J': 'Cyprus',
     '10YCZ-CEPS-----N': 'Czech Republic',
+    '10Y1001A1001A65H': 'Denmark',
+    '10Y1001A1001A39I': 'Estonia',
     '10YFI-1--------U': 'Finland',
     '10YFR-RTE------C': 'France',
     '10Y1001A1001A83F': 'Germany',
@@ -13,9 +15,12 @@ country_eic = {
     '10YHU-MAVIR----U': 'Hungary',
     '10YIE-1001A00010': 'Ireland',
     '10YIT-GRTN-----B': 'Italy',
+    '10Y1001C--00100H': 'Kosovo',
     '10YLV-1001A00074': 'Latvia',
     '10YLT-1001A0008Q': 'Lithuania',
     '10YLU-CEGEDEL-NQ': 'Luxembourg',
+    '10Y1001A1001A93C': 'Malta',
+    '10Y1001A1001A990': 'Moldova',
     '10YCS-CG-TSO---S': 'Montenegro',
     '10YNL----------L': 'Netherlands',
     '10YMK-MEPSO----8': 'North Macedonia',
@@ -28,5 +33,8 @@ country_eic = {
     '10YSI-ELES-----O': 'Slovenia',
     '10YES-REE------0': 'Spain',
     '10YSE-1--------K': 'Sweden',
-    '10YCH-SWISSGRIDZ': 'Switzerland'
+    '10YCH-SWISSGRIDZ': 'Switzerland',
+    '10YTR-TEIAS----W': 'Türkiye',
+    '10Y1001C--00003F': 'Ukraine',
+    '10Y1001A1001A92E': 'United Kingdom'
 }

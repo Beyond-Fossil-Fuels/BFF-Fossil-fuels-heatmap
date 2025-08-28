@@ -198,8 +198,8 @@ for _, missing_row in missing_with_hours.iterrows():
         result.loc[mask, 'Hour'] = missing_row['Hour']
 
 # Sum for all countries
-all_countries = result[result['Country'] != 'Italy'].copy()
-all_countries['Country'] = 'All countries'
+all_countries = result[result['Country'].isin(['Italy','Ukraine','United Kingdom'])].copy()
+all_countries['Country'] = 'Europe'
 all_countries = all_countries.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'],observed=False)['Hour'].sum().reset_index()
 number_of_countries = len(result['Country'].unique())-1
 all_countries['Hour'] = all_countries['Hour'] / number_of_countries
