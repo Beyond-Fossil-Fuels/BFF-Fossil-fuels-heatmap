@@ -119,7 +119,7 @@ fig.add_trace(go.Heatmap(
 
 st.title(f'BFF heatmap - {selected_fuel.lower()} share in generation')
 fig.update_layout(
-    title=f'<i>{selected_country.upper()}</i>: Number of hours when <i>{selected_fuel.lower()}</i> represented <i>{selected_share_bin}</i> of total generation', 
+    title=f'<i>{selected_country.upper()}</i>: Number of hours when <i>{selected_fuel.upper()}</i> represented <i>{selected_share_bin}</i> of total generation', 
     title_x=0.1,
     xaxis_title='Month',
     yaxis_title='Year',
