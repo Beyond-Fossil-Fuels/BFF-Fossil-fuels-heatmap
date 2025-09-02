@@ -5,65 +5,66 @@ from pathlib import Path
 import io
 from country_eic import country_eic
 
+
 def concatenate_csvs_from_zips(folder_path):
     """
     Extract CSV files from all zip files in a folder and concatenate them into a single DataFrame.
-    
+
     Args:
         folder_path (str): Path to the folder containing zip files
-        
+
     Returns:
         pd.DataFrame: Concatenated DataFrame from all CSV files
     """
     folder_path = Path(folder_path)
     all_dataframes = []
-    
+
     # Find all zip files in the folder
     zip_files = list(folder_path.glob("*.zip"))
-    
+
     if not zip_files:
         print(f"No zip files found in {folder_path}")
         return pd.DataFrame()
-    
+
     print(f"Found {len(zip_files)} zip files")
-    
+
     for zip_file in zip_files:
         print(f"Processing: {zip_file.name}")
-        
+
         try:
-            with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            with zipfile.ZipFile(zip_file, "r") as zip_ref:
                 # Get list of files in the zip
                 file_list = zip_ref.namelist()
-                
+
                 # Find CSV files in the zip
-                csv_files = [f for f in file_list if f.lower().endswith('.csv')]
-                
+                csv_files = [f for f in file_list if f.lower().endswith(".csv")]
+
                 if not csv_files:
                     print(f"  No CSV files found in {zip_file.name}")
                     continue
-                
+
                 # Process each CSV file in the zip
                 for csv_file in csv_files:
                     print(f"  Extracting: {csv_file}")
-                    
+
                     # Read the CSV file directly from the zip
                     with zip_ref.open(csv_file) as file:
                         # Read the CSV content into a DataFrame
                         csv_content = file.read()
-                        df = pd.read_csv(io.BytesIO(csv_content), sep='\t')
-                        
+                        df = pd.read_csv(io.BytesIO(csv_content), sep="\t")
+
                         # Add source information (optional)
-                        df['source_zip'] = zip_file.name
-                        df['source_csv'] = csv_file
-                        
+                        df["source_zip"] = zip_file.name
+                        df["source_csv"] = csv_file
+
                         all_dataframes.append(df)
                         print(f"    Added {len(df)} rows from {csv_file}")
-        
+
         except zipfile.BadZipFile:
             print(f"  Error: {zip_file.name} is not a valid zip file")
         except Exception as e:
             print(f"  Error processing {zip_file.name}: {str(e)}")
-    
+
     # Concatenate all DataFrames
     if all_dataframes:
         result_df = pd.concat(all_dataframes, ignore_index=True)
@@ -83,133 +84,249 @@ folder_path = "data/"
 combined_df = concatenate_csvs_from_zips(folder_path)
 
 # Filter Area Type to be country ('CTY')
-combined_df = combined_df[combined_df['AreaTypeCode']=='CTY']
+combined_df = combined_df[combined_df["AreaTypeCode"] == "CTY"]
 # Get Country names instead of EICs
-combined_df = combined_df[combined_df['AreaCode'].map(country_eic).notna()]
-combined_df['Country'] = combined_df['AreaCode'].map(country_eic)
+combined_df = combined_df[combined_df["AreaCode"].map(country_eic).notna()]
+combined_df["Country"] = combined_df["AreaCode"].map(country_eic)
 
 # Filter columns we need
-combined_df = combined_df[['DateTime','Country','ResolutionCode','ProductionType','ActualGenerationOutput']]
+combined_df = combined_df[
+    [
+        "DateTime",
+        "Country",
+        "ResolutionCode",
+        "ProductionType",
+        "ActualGenerationOutput",
+    ]
+]
 
 # Calculate fossil, coal and gas generation
-fossil_fuels = ['Fossil Gas', 'Fossil Hard coal', 'Fossil Oil', 'Fossil Coal-derived gas', 'Fossil Oil shale', 'Fossil Brown coal/Lignite', 'Fossil Peat']
-coal = ['Fossil Hard coal', 'Fossil Coal-derived gas', 'Fossil Brown coal/Lignite']
-gas = ['Fossil Gas']
+fossil_fuels = [
+    "Fossil Gas",
+    "Fossil Hard coal",
+    "Fossil Oil",
+    "Fossil Coal-derived gas",
+    "Fossil Oil shale",
+    "Fossil Brown coal/Lignite",
+    "Fossil Peat",
+]
+coal = ["Fossil Hard coal", "Fossil Coal-derived gas", "Fossil Brown coal/Lignite"]
+gas = ["Fossil Gas"]
 
-fossil_generation = combined_df[combined_df['ProductionType'].isin(fossil_fuels)].groupby(['DateTime','Country','ResolutionCode']).sum('ActualGenerationOutput').reset_index()
-fossil_generation = fossil_generation.rename(columns={'ActualGenerationOutput':'Generation'})
-fossil_generation['Fuel'] = 'Fossil fuel' 
+fossil_generation = (
+    combined_df[combined_df["ProductionType"].isin(fossil_fuels)]
+    .groupby(["DateTime", "Country", "ResolutionCode"])
+    .sum("ActualGenerationOutput")
+    .reset_index()
+)
+fossil_generation = fossil_generation.rename(
+    columns={"ActualGenerationOutput": "Generation"}
+)
+fossil_generation["Fuel"] = "Fossil fuel"
 
-coal_generation = combined_df[combined_df['ProductionType'].isin(coal)].groupby(['DateTime','Country','ResolutionCode']).sum('ActualGenerationOutput').reset_index()
-coal_generation = coal_generation.rename(columns={'ActualGenerationOutput':'Generation'})
-coal_generation['Fuel'] =  'Coal'
+coal_generation = (
+    combined_df[combined_df["ProductionType"].isin(coal)]
+    .groupby(["DateTime", "Country", "ResolutionCode"])
+    .sum("ActualGenerationOutput")
+    .reset_index()
+)
+coal_generation = coal_generation.rename(
+    columns={"ActualGenerationOutput": "Generation"}
+)
+coal_generation["Fuel"] = "Coal"
 
-gas_generation = combined_df[combined_df['ProductionType'].isin(gas)].groupby(['DateTime','Country','ResolutionCode']).sum('ActualGenerationOutput').reset_index()
-gas_generation = gas_generation.rename(columns={'ActualGenerationOutput':'Generation'})
-gas_generation['Fuel'] = 'Gas'
+gas_generation = (
+    combined_df[combined_df["ProductionType"].isin(gas)]
+    .groupby(["DateTime", "Country", "ResolutionCode"])
+    .sum("ActualGenerationOutput")
+    .reset_index()
+)
+gas_generation = gas_generation.rename(columns={"ActualGenerationOutput": "Generation"})
+gas_generation["Fuel"] = "Gas"
 
-#Concate the three tables
-df_generation = pd.concat([fossil_generation,coal_generation,gas_generation])
+# Concate the three tables
+df_generation = pd.concat([fossil_generation, coal_generation, gas_generation])
 
 # Calculate total generation
-total_generation = combined_df.groupby(['DateTime','Country','ResolutionCode']).sum('ActualGenerationOutput').reset_index()
-total_generation = total_generation.rename(columns={'ActualGenerationOutput':'TotalGeneration'})
+total_generation = (
+    combined_df.groupby(["DateTime", "Country", "ResolutionCode"])
+    .sum("ActualGenerationOutput")
+    .reset_index()
+)
+total_generation = total_generation.rename(
+    columns={"ActualGenerationOutput": "TotalGeneration"}
+)
 
-#Concate the three tables
+# Concate the three tables
 
 # Merge both and calculate fossil share
-df_generation = total_generation.merge(df_generation,how='left')
-df_generation['Generation'].fillna(0, inplace = True)
-df_generation['Fuel'].fillna('Fossil fuel', inplace = True)
+df_generation = total_generation.merge(df_generation, how="left")
+df_generation["Generation"] = df_generation["Generation"].fillna(0)
+df_generation["Fuel"] = df_generation["Fuel"].fillna("Fossil fuel")
 
-df_generation['Share'] = df_generation['Generation']/df_generation['TotalGeneration']*100
+df_generation["Share"] = (
+    df_generation["Generation"] / df_generation["TotalGeneration"] * 100
+)
 
 # Get Month and year from DateTime, and get the amount of hour associated to each entry
-df_generation['DateTime'] = pd.to_datetime(df_generation['DateTime'])
-df_generation['Hour'] = df_generation['ResolutionCode'].apply(
-    lambda x: 0.25 if x == 'PT15M' else (0.5 if x == 'PT30M' else 1)
+df_generation["DateTime"] = pd.to_datetime(df_generation["DateTime"])
+df_generation["Hour"] = df_generation["ResolutionCode"].apply(
+    lambda x: 0.25 if x == "PT15M" else (0.5 if x == "PT30M" else 1)
 )
-df_generation['Year'] = df_generation['DateTime'].dt.year.astype('int') 
-df_generation['Month'] = df_generation['DateTime'].dt.month.astype('int')
+df_generation["Year"] = df_generation["DateTime"].dt.year.astype("int")
+df_generation["Month"] = df_generation["DateTime"].dt.month.astype("int")
 
-bins = [0, 1, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, float('inf')]
-labels = ['<1%', '<3%', '<5%', '<10%', '<15%', '<20%', '<25%', '<30%', '<35%', '<40%', '<45%', '<50%', '<55%', '<60%', '<65%', '<70%', '<75%', '<80%', '<85%', '<90%', '<95%', '>=95%']
+bins = [
+    0,
+    1,
+    3,
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    35,
+    40,
+    45,
+    50,
+    55,
+    60,
+    65,
+    70,
+    75,
+    80,
+    85,
+    90,
+    95,
+    float("inf"),
+]
+labels = [
+    "<1%",
+    "<3%",
+    "<5%",
+    "<10%",
+    "<15%",
+    "<20%",
+    "<25%",
+    "<30%",
+    "<35%",
+    "<40%",
+    "<45%",
+    "<50%",
+    "<55%",
+    "<60%",
+    "<65%",
+    "<70%",
+    "<75%",
+    "<80%",
+    "<85%",
+    "<90%",
+    "<95%",
+    ">=95%",
+]
 
 # Classify to discrete categories
-df_generation['Share_bins'] = pd.cut(df_generation['Share'], 
-                                   bins=bins, 
-                                   labels=labels, 
-                                   include_lowest=True)
+df_generation["Share_bins"] = pd.cut(
+    df_generation["Share"], bins=bins, labels=labels, include_lowest=True
+)
 
 # Convert to categorical if not already
-df_generation['Share_bins'] = df_generation['Share_bins'].astype('category')
-df_generation['Fuel'] = pd.Categorical(df_generation['Fuel'], ['Coal','Gas','Fossil fuel'])
+df_generation["Share_bins"] = df_generation["Share_bins"].astype("category")
+df_generation["Fuel"] = pd.Categorical(
+    df_generation["Fuel"], ["Coal", "Gas", "Fossil fuel"]
+)
 
-#result = df_generation.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'],observed=False)['Hour'].sum().reset_index()
+# result = df_generation.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'],observed=False)['Hour'].sum().reset_index()
 # Use observed=True to only get existing combinations
-result = df_generation.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'], observed=True)['Hour'].sum().reset_index()
+result = (
+    df_generation.groupby(
+        ["Year", "Month", "Country", "Fuel", "Share_bins"], observed=True
+    )["Hour"]
+    .sum()
+    .reset_index()
+)
 
 # Now add missing Share_bins categories for each Year/Month/Country/Fuel combination
-all_combinations = result[['Year', 'Month', 'Country', 'Fuel']].drop_duplicates()
+all_combinations = result[["Year", "Month", "Country", "Fuel"]].drop_duplicates()
 
 # Create a complete index with all Share_bins categories
 complete_index = []
 for _, row in all_combinations.iterrows():
-    for share_bin in df_generation['Share_bins'].cat.categories:
-        for fuel in df_generation['Fuel'].cat.categories:
-            complete_index.append({
-                'Year': row['Year'],
-                'Month': row['Month'], 
-                'Country': row['Country'],
-                'Fuel': fuel,
-                'Share_bins': share_bin
-            })
+    for share_bin in df_generation["Share_bins"].cat.categories:
+        for fuel in df_generation["Fuel"].cat.categories:
+            complete_index.append(
+                {
+                    "Year": row["Year"],
+                    "Month": row["Month"],
+                    "Country": row["Country"],
+                    "Fuel": fuel,
+                    "Share_bins": share_bin,
+                }
+            )
 
 complete_df = pd.DataFrame(complete_index).drop_duplicates()
-result = complete_df.merge(result, on=['Year', 'Month', 'Country', 'Fuel', 'Share_bins'], how='left')
-result['Hour'] = result['Hour'].fillna(0)
+result = complete_df.merge(
+    result, on=["Year", "Month", "Country", "Fuel", "Share_bins"], how="left"
+)
+result["Hour"] = result["Hour"].fillna(0)
 
 # If no data, we assume there is no such fuel in the country, and we consider all hours are 0
-number_of_hours=result[['Year', 'Month', 'Country', 'Fuel','Hour']].groupby(['Year', 'Month', 'Country', 'Fuel']).sum().reset_index()
-missing_data = number_of_hours[number_of_hours['Hour']==0][['Year', 'Month', 'Country', 'Fuel']]
-number_of_hours=number_of_hours.groupby(['Year', 'Month']).max().reset_index()
-number_of_hours = number_of_hours[['Year', 'Month','Hour']]
+number_of_hours = (
+    result[["Year", "Month", "Country", "Fuel", "Hour"]]
+    .groupby(["Year", "Month", "Country", "Fuel"])
+    .sum()
+    .reset_index()
+)
+missing_data = number_of_hours[number_of_hours["Hour"] == 0][
+    ["Year", "Month", "Country", "Fuel"]
+]
+number_of_hours = number_of_hours.groupby(["Year", "Month"]).max().reset_index()
+number_of_hours = number_of_hours[["Year", "Month", "Hour"]]
 
 # Merge missing_data with number_of_hours to get the Hour values
 missing_with_hours = missing_data.merge(
-    number_of_hours, 
-    on=['Year', 'Month'], 
-    how='left'
+    number_of_hours, on=["Year", "Month"], how="left"
 )
 
 # For each row in missing_with_hours, find matching rows in result
 for _, missing_row in missing_with_hours.iterrows():
     # Find matching rows in result
     mask = (
-        (result['Year'] == missing_row['Year']) &
-        (result['Month'] == missing_row['Month']) &
-        (result['Country'] == missing_row['Country']) &
-        (result['Fuel'] == missing_row['Fuel']) &
-        (result['Share_bins'] == '<1%')
+        (result["Year"] == missing_row["Year"])
+        & (result["Month"] == missing_row["Month"])
+        & (result["Country"] == missing_row["Country"])
+        & (result["Fuel"] == missing_row["Fuel"])
+        & (result["Share_bins"] == "<1%")
     )
-    
+
     # Update Share_bins to '<1%' and Hour to the value from number_of_hours
-    if mask.any() and pd.notna(missing_row['Hour']):
-        result.loc[mask, 'Hour'] = missing_row['Hour']
+    if mask.any() and pd.notna(missing_row["Hour"]):
+        result.loc[mask, "Hour"] = missing_row["Hour"]
 
 # Sum for all countries
-all_countries = result[result['Country'].isin(['Italy','Ukraine','United Kingdom'])].copy()
-all_countries['Country'] = 'Europe'
-all_countries = all_countries.groupby(['Year', 'Month', 'Country','Fuel', 'Share_bins'],observed=False)['Hour'].sum().reset_index()
-number_of_countries = len(result['Country'].unique())-1
-all_countries['Hour'] = all_countries['Hour'] / number_of_countries
+all_countries = result[
+    result["Country"].isin(["Italy", "Ukraine", "United Kingdom"]) == False
+].copy()
+all_countries["Country"] = "Europe average"
+all_countries = (
+    all_countries.groupby(
+        ["Year", "Month", "Country", "Fuel", "Share_bins"], observed=False
+    )["Hour"]
+    .sum()
+    .reset_index()
+)
+number_of_countries = len(result["Country"].unique()) - 1
+all_countries["Hour"] = all_countries["Hour"] / number_of_countries
 
-result = pd.concat([result,all_countries])
+result = pd.concat([result, all_countries])
 
 # Order
-result['Share_bins'] = result['Share_bins'].astype('category')
-result['Share_bins'] = result['Share_bins'].cat.reorder_categories(labels, ordered=True)
-result = result.sort_values(['Year', 'Month', 'Country', 'Fuel', 'Share_bins'])
-result['Cumulative_Hours'] = result.groupby(['Year', 'Month', 'Country', 'Fuel'])['Hour'].cumsum()
+result["Share_bins"] = result["Share_bins"].astype("category")
+result["Share_bins"] = result["Share_bins"].cat.reorder_categories(labels, ordered=True)
+result = result.sort_values(["Year", "Month", "Country", "Fuel", "Share_bins"])
+result["Cumulative_Hours"] = result.groupby(["Year", "Month", "Country", "Fuel"])[
+    "Hour"
+].cumsum()
 
-result.to_csv('generation_data_test.csv',index=False)
+result.to_csv("generation_data_082025.csv", index=False)
