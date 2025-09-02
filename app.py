@@ -38,7 +38,7 @@ available_countries = ["Europe average"] + sorted(
     ]
 )
 selected_country = st.sidebar.selectbox(
-    "Select a country:", options=available_countries
+    "Select a country:", options=available_countries, index=1
 )
 
 # Fuel filter
