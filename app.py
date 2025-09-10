@@ -118,7 +118,7 @@ fig.add_trace(
         z=matrix,
         x=month_labels,
         y=[str(year) for year in years],
-        colorscale=[[0, "#D61F1F"], [0.5, "#FFD301"], [1, "#006B3D"]],
+        colorscale=[[0, "#8A2852"], [0.5, "#FFD301"], [1, "#9CBB18"]],
         colorbar=dict(title="Colorscale: number of hours"),
         hoverongaps=False,
         hovertemplate="Date: %{x} %{y}<br>Number of hours: %{z}<extra></extra>",
