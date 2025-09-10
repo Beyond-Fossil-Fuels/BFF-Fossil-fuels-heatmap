@@ -63,7 +63,7 @@ st.sidebar.info(
 
     **🎨 Color scale**  
     - 🟩 Green → More hours below threshold (lower fossil fuel reliance)  
-    - 🟥 Red → Fewer hours below threshold (higher fossil fuel reliance)  
+    - 🟫 Brown → Fewer hours below threshold (higher fossil fuel reliance)  
 
     **🕒 Trends over time**  
     Greener tones highlight progress toward cleaner energy.  
